@@ -1,0 +1,7 @@
+requests
+tqdm
+mutagen
+pydub
+pathvalidate
+pylrc
+Pillow
