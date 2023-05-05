@@ -14,7 +14,7 @@ from pydub import AudioSegment
 import time
 import datetime
 import sys
-
+import random
 def make_valid(filename):
     # Make a filename valid in different OSs
     f = filename.replace(':', '_')
@@ -98,6 +98,7 @@ def fill_metadata(filename, filetype, album, title, albumartist, artist, tracknu
 
 def download_song(session, directory, name, url, song_counter, lock):
     # Set timeout and retry parameters
+    time.sleep(3)
     timeout = 10
     retries = 5
 
@@ -217,7 +218,8 @@ def download_album( args, pass_counter, song_counter, album_counter,lock):
         song_name = song['name']
         song_artists = song['artistes']
         song_url = 'https://monster-siren.hypergryph.com/api/song/' + song_cid
-        song_detail = session.get(song_url, headers={'Accept': 'application/json'}).json()['data']
+        headers = read_agent()
+        song_detail = session.get(song_url, headers=headers).json()['data']
         song_lyricUrl = song_detail['lyricUrl']
         song_sourceUrl = song_detail['sourceUrl']
 
@@ -248,6 +250,21 @@ def download_album( args, pass_counter, song_counter, album_counter,lock):
     queue.put(album_name) 
     return 
 
+def read_agent():
+    # Read user agent strings from file
+    with open('user_agent.txt', 'r') as f:
+        user_agent_list = [line.strip() for line in f]
+
+    # Choose a random user agent
+    user_agent = random.choice(user_agent_list)
+
+    # Set headers with Accept and User-Agent
+    headers = {
+        'Accept': 'application/json',
+        'User-Agent': user_agent
+    }
+    return headers
+
 
 def main():
     directory = './MonsterSiren/'
@@ -264,8 +281,10 @@ def main():
     except:
         pass
 
+
+    headers = read_agent()
     # Get all albums
-    albums = session.get('https://monster-siren.hypergryph.com/api/albums', headers={'Accept': 'application/json'}).json()['data']
+    albums = session.get('https://monster-siren.hypergryph.com/api/albums', headers=headers).json()['data']
     for album in albums:
         album['directory'] = directory
         album['session'] = session
