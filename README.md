@@ -10,6 +10,7 @@ Download all songs, albums and fill out metadata, album, cover art, artists and 
 - Add the counter in the multiprocess to count the songs and album
 - Fix the tool use on Windows will be false because the album name have the space in the last
 - Add the delay in every download active
+- Add the User Agent to avoid the Program identify is a crawler
 
 ### Falsed to accomplish
 
