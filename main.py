@@ -1,5 +1,7 @@
 import os
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 from tqdm import tqdm
 import pylrc
 import json
@@ -11,6 +13,7 @@ from mutagen.flac import Picture, FLAC
 from pydub import AudioSegment
 import time
 import datetime
+import sys
 
 def make_valid(filename):
     # Make a filename valid in different OSs
@@ -93,7 +96,11 @@ def fill_metadata(filename, filetype, album, title, albumartist, artist, tracknu
 
 
 
-def download_song(session, directory, name, url, song_counter,lock):
+def download_song(session, directory, name, url, song_counter, lock):
+    # Set timeout and retry parameters
+    timeout = 10
+    retries = 5
+
     source = session.get(url, stream=True)
     filename = directory + '/' + make_valid(name)
     filetype = ''
@@ -104,10 +111,10 @@ def download_song(session, directory, name, url, song_counter,lock):
     else:
         filename += '.wav'
 
-    # Download song
+    # Download song with retries and timeout
     total = int(source.headers.get('content-length', 0))
     downloaded = 0
-    retries = 0
+    retry_count = 0
     while downloaded < total:
         try:
             with open(filename, 'ab') as f, tqdm(
@@ -118,25 +125,29 @@ def download_song(session, directory, name, url, song_counter,lock):
                 unit_scale=True,
                 unit_divisor=1024,
             ) as bar:
-                # add a re-download feature for songs that weren't downloaded completely.
                 f.seek(downloaded)
                 for data in source.iter_content(chunk_size = 1024):
                     size = f.write(data)
                     downloaded += size
                     bar.update(size)
-        except requests.exceptions.RequestException as e:
-            if retries >= 5:
+                    if downloaded >= total:
+                        break
+                    if retry_count > 0:
+                        print(f'Retry successful. Downloading {name}...')
+                    retry_count = 0
+        except (requests.exceptions.RequestException, IOError) as e:
+            if retry_count >= retries:
                 raise e
             else:
-                retries += 1
-                print(f"Download of {name} failed. Retrying in 5 seconds ({retries}/5)")
-                time.sleep(5)
-                source = session.get(url, stream=True)
+                retry_count += 1
+                print(f"Download of {name} failed. Retrying in 3 seconds ({retry_count}/{retries})", file=sys.stderr)
+                time.sleep(3)
+                source = session.get(url, stream=True, timeout=timeout)
                 total = int(source.headers.get('content-length', 0))
-                downloaded = f.tell() #returns the current position of the file pointer, used to resume the download from the last successful byte position in case of a connection error or other interruption.
+                downloaded = f.tell()
 
         if downloaded < total:
-            print(f'Download of {name} was incomplete. Retrying...')
+            print(f'Download of {name} was incomplete. Retrying...', file=sys.stderr)
             os.remove(filename)
 
     # If file is .wav then export to .flac
@@ -145,9 +156,11 @@ def download_song(session, directory, name, url, song_counter,lock):
         os.remove(filename)
         filename = directory + '/' + make_valid(name) + '.flac'
         filetype = '.flac'
-            # Increase song counter
+
+    # Increase song counter
     with lock:
         song_counter.value += 1
+
     return filename, filetype
     
 
