@@ -12,17 +12,16 @@ All songs are be .mp3.
 - Fix the tool use on Windows will be false because the album name have the space in the last
 - Add the delay in every download active
 - Add the User Agent to avoid the Program identify is a crawler
+- Add the choice to choose which the format of song
 
 ### Falsed to accomplish
 
 - [ ] retry to print the retry message.  
 (Think may the message should add in the tqdm)   
-- [ ] The Counter of the song is not correct.  
 
 ### Note:
 
-The API offers .mp3 and .wav, but the program convert .wav to .flac since .wav can't do metadata.  
-All the format are tranfer into mp3   
+The API offers .mp3 and .wav, but the program convert .wav to .flac or .mp3 since .wav can't do metadata.  
 
 ### Requirements:
 
@@ -45,3 +44,6 @@ Pillow
 ### Runs:
 
 ```python3 main.py``` or ```python main.py```
+
+```Enter the format of the song, mp3 or flac ( The songs offers .mp3 and .wav, the program will convert .wav to .flac or .mp3 since .wav can't do metadata. )```
+
