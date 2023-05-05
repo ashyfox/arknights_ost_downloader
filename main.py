@@ -150,6 +150,9 @@ def download_song(session, directory, name, url, song_counter, lock):
         if downloaded < total:
             print(f'Download of {name} was incomplete. Retrying...', file=sys.stderr)
             os.remove(filename)
+    # Increase song counter
+    with lock:
+        song_counter.value += 1
 
     # If file is .wav then export to .flac
     if source.headers['content-type'] != 'audio/mpeg':
@@ -157,11 +160,7 @@ def download_song(session, directory, name, url, song_counter, lock):
         os.remove(filename)
         filename = directory + '/' + make_valid(name) + '.flac'
         filetype = '.flac'
-
-    # Increase song counter
-    with lock:
-        song_counter.value += 1
-
+        
     return filename, filetype
     
 
@@ -303,7 +302,7 @@ def main():
     song_total = song_counter.value
     album_total = album_counter.value
     # Write counter to file
-    with open("counter.txt", "a") as f:
+    with open("Statistics.txt", "a") as f:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         f.write(f'Finish Time: {timestamp}\n')
         f.write(f'Total albums skipped: {pass_total}\n')
