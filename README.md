@@ -12,7 +12,7 @@ Test for use on Ubuntu & Windows in Python 3
 
 ### Falsed to accomplish
 
-[x] retry to print the retry message . 
+[x] retry to print the retry message.  
 (Think may the message should add in the tqdm) 
 
 Download all songs, albums and fill out metadata, album, cover art, artists and even lyrics
