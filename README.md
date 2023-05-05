@@ -7,7 +7,8 @@ Fixed from 1n0r1
 - Add the counter in the multiprocess to count the songs and album
 - Fix the tool use un Windows will be false because the album name have the space in the last
 
-Falsed to accomplish
+### Falsed to accomplish
+
 [x] retry to print the retry message . (Think may the message should add in the tqdm) 
 
 Download all songs, albums and fill out metadata, album, cover art, artists and even lyrics
