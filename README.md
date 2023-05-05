@@ -16,6 +16,7 @@ Download all songs, albums and fill out metadata, album, cover art, artists and 
 
 [x] retry to print the retry message.  
 (Think may the message should add in the tqdm) 
+[ ] The Counter of the song is not correct.  
 
 ### Note:
 
