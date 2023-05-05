@@ -3,14 +3,14 @@ import requests
 from tqdm import tqdm
 import pylrc
 import json
-
 from PIL import Image
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool, Manager,Lock, Value
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import APIC, SYLT, Encoding, ID3
 from mutagen.flac import Picture, FLAC
 from pydub import AudioSegment
 import time
+import datetime
 
 def make_valid(filename):
     # Make a filename valid in different OSs
@@ -92,7 +92,8 @@ def fill_metadata(filename, filetype, album, title, albumartist, artist, tracknu
     return 
 
 
-def download_song(session, directory, name, url):
+
+def download_song(session, directory, name, url, song_counter,lock):
     source = session.get(url, stream=True)
     filename = directory + '/' + make_valid(name)
     filetype = ''
@@ -105,16 +106,38 @@ def download_song(session, directory, name, url):
 
     # Download song
     total = int(source.headers.get('content-length', 0))
-    with open(filename, 'w+b') as f, tqdm(
-        desc=name,
-        total=total,
-        unit='iB',
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as bar:
-        for data in source.iter_content(chunk_size = 1024):
-            size = f.write(data)
-            bar.update(size)
+    downloaded = 0
+    retries = 0
+    while downloaded < total:
+        try:
+            with open(filename, 'ab') as f, tqdm(
+                desc=name,
+                total=total,
+                initial=downloaded,
+                unit='iB',
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as bar:
+                # add a re-download feature for songs that weren't downloaded completely.
+                f.seek(downloaded)
+                for data in source.iter_content(chunk_size = 1024):
+                    size = f.write(data)
+                    downloaded += size
+                    bar.update(size)
+        except requests.exceptions.RequestException as e:
+            if retries >= 5:
+                raise e
+            else:
+                retries += 1
+                print(f"Download of {name} failed. Retrying in 5 seconds ({retries}/5)")
+                time.sleep(5)
+                source = session.get(url, stream=True)
+                total = int(source.headers.get('content-length', 0))
+                downloaded = f.tell() #returns the current position of the file pointer, used to resume the download from the last successful byte position in case of a connection error or other interruption.
+
+        if downloaded < total:
+            print(f'Download of {name} was incomplete. Retrying...')
+            os.remove(filename)
 
     # If file is .wav then export to .flac
     if source.headers['content-type'] != 'audio/mpeg':
@@ -122,11 +145,13 @@ def download_song(session, directory, name, url):
         os.remove(filename)
         filename = directory + '/' + make_valid(name) + '.flac'
         filetype = '.flac'
-
+            # Increase song counter
+    with lock:
+        song_counter.value += 1
     return filename, filetype
+    
 
-
-def download_album( args):
+def download_album( args, pass_counter, song_counter, album_counter,lock):
     directory = args['directory']
     session = args['session']
     queue = args['queue']
@@ -153,6 +178,8 @@ def download_album( args):
     if album_name in completed_albums:
         # If album is completed then skip
         print(f'Skipping downloaded album {album_name}')
+        with lock:
+            pass_counter.value += 1
         return
     try:
         os.mkdir(directory + album_name)
@@ -172,6 +199,7 @@ def download_album( args):
     songs = session.get(album_url, headers={'Accept': 'application/json'}).json()['data']['songs']
     for song_track_number, song in enumerate(songs):
         # Get song details
+        time.sleep(3)  # add 3-second delay
         song_cid = song['cid']
         song_name = song['name']
         song_artists = song['artistes']
@@ -189,7 +217,7 @@ def download_album( args):
             songlyricpath = None
 
         # Download song and fill out metadata
-        filename, filetype = download_song(session=session, directory=directory + album_name, name=song_name, url=song_sourceUrl)
+        filename, filetype = download_song(session=session, directory=directory + album_name, name=song_name, url=song_sourceUrl,song_counter=song_counter,lock=lock)
         fill_metadata(filename=filename,
                         filetype=filetype,
                         album=album_name,
@@ -199,10 +227,13 @@ def download_album( args):
                         tracknumber=song_track_number,
                         albumcover=directory + album_name + '/cover.png',
                         songlyricpath=songlyricpath)
-    
+
+    # Increase album counter
+    with lock:
+        album_counter.value += 1
     # Mark album as finished
-    queue.put(album_name)
-    return
+    queue.put(album_name) 
+    return 
 
 
 def main():
@@ -210,13 +241,16 @@ def main():
     session = requests.Session()
     manager = Manager()
     queue = manager.Queue()
+    lock = manager.Lock()
+    pass_counter = manager.Value('i', 0)
+    song_counter = manager.Value('i', 0)
+    album_counter = manager.Value('i', 0)
 
     try:
         os.mkdir(directory)
     except:
         pass
 
-    
     # Get all albums
     albums = session.get('https://monster-siren.hypergryph.com/api/albums', headers={'Accept': 'application/json'}).json()['data']
     for album in albums:
@@ -225,12 +259,26 @@ def main():
         album['queue'] = queue
 
 
-    with Pool(maxtasksperchild=1) as pool:
+    # Download all albums
+    num_workers = os.cpu_count() - 3  # leave one CPU core free
+    with Pool(num_workers) as pool:
+    # with Pool(maxtasksperchild=1) as pool:
         pool.apply_async(update_downloaded_albums, (queue, directory))
-        print(len(albums))
-        pool.map(download_album, albums)
+        results = pool.starmap(download_album, [(album, pass_counter, song_counter, album_counter, lock) for album in albums])
         queue.put('kill')
     
+    pass_total = pass_counter.value
+    song_total = song_counter.value
+    album_total = album_counter.value
+    # Write counter to file
+    with open("counter.txt", "a") as f:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        f.write(f'Finish Time: {timestamp}\n')
+        f.write(f'Total albums skipped: {pass_total}\n')
+        f.write(f"Downloaded {song_total} songs from {album_total} albums.\n")
+        f.write(f"-----------------------------\n")
+    print(f'Total albums skipped: {pass_total}')
+    print(f"Downloaded {song_total} songs from {album_total} albums.")
     return
 
 
