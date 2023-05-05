@@ -23,6 +23,16 @@ Python
 
 ffmpeg
 
+```
+requests
+tqdm
+mutagen
+pydub
+pathvalidate
+pylrc
+Pillow
+```
+
 ```pip3 install -r requirements.txt``` or ```pip install -r requirements.txt```
 
 ### Runs:
