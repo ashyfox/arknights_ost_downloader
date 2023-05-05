@@ -2,6 +2,7 @@ Fixed from 1n0r1
 
 Already test for using on Ubuntu & Windows in Python 3.  
 Download all songs, albums and fill out metadata, album, cover art, artists and even lyrics.  
+All songs are be .mp3.   
 
 ### Fix and add function
 
@@ -20,7 +21,8 @@ Download all songs, albums and fill out metadata, album, cover art, artists and 
 
 ### Note:
 
-The API offers .mp3 and .wav, but the program convert .wav to .flac since .wav can't do metadata.
+The API offers .mp3 and .wav, but the program convert .wav to .flac since .wav can't do metadata.  
+All the format are tranfer into mp3   
 
 ### Requirements:
 
