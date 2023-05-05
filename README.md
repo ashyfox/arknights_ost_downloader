@@ -1,7 +1,14 @@
-Tested on Ubuntu and Python 3
+Fixed from 1n0r1
 
+### Fix and add function
 
-A simple script to download all your favorite Arknights OSTs from monster-siren.hypergryph.com
+- Add the retry for the song didn't download for 100%
+- Add the timeout connection and retry function
+- Add the counter in the multiprocess to count the songs and album
+- Fix the tool use un Windows will be false because the album name have the space in the last
+
+Falsed to accomplish
+[x] retry to print the retry message . (Think may the message should add in the tqdm) 
 
 Download all songs, albums and fill out metadata, album, cover art, artists and even lyrics
 
@@ -20,10 +27,3 @@ ffmpeg
 ### Runs:
 
 ```python3 main.py``` or ```python main.py```
-
-### Video instructions:
-https://drive.google.com/file/d/1Kzcn3GazpE9MHtzlkgJB3L0DtvsHK88M/view?usp=sharing
-
-
-![image](https://user-images.githubusercontent.com/80285371/207703442-a96488bc-5642-4d7b-92da-f0ac976e944b.png)
-![image](https://user-images.githubusercontent.com/80285371/207703484-2271b5a1-7928-401d-9bed-a5e4feeec4d0.png)
