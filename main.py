@@ -96,7 +96,7 @@ def fill_metadata(filename, filetype, album, title, albumartist, artist, tracknu
 
 
 
-def download_song(session, directory, name, url, song_counter, lock):
+def download_song(session, directory, name, url, song_counter, lock,file_format):
     # Set timeout and retry parameters
     time.sleep(3)
     timeout = 10
@@ -150,21 +150,42 @@ def download_song(session, directory, name, url, song_counter, lock):
         if downloaded < total:
             print(f'Download of {name} was incomplete. Retrying...', file=sys.stderr)
             os.remove(filename)
-    # Increase song counter
-    with lock:
-        song_counter.value += 1
+        
+        # Increase song counter
+        with lock:
+            song_counter.value += 1
 
     # If file is .wav then export to .flac
     if source.headers['content-type'] != 'audio/mpeg':
+        filename, filetype = choice_format(file_format,filename,directory,name)
+
+        
+    return filename, filetype
+
+
+# define a function to make a valid file name
+def choice_format(file_format,filename,directory,name):
+    # implementation details here
+
+    # check the input and perform the conversion
+    if file_format == 'flac':
+        # convert to FLAC
         AudioSegment.from_wav(filename).export(directory + '/' + make_valid(name) + '.flac', format='flac')
         os.remove(filename)
         filename = directory + '/' + make_valid(name) + '.flac'
         filetype = '.flac'
-        
-    return filename, filetype
+    elif file_format == 'mp3':
+        # convert to MP3
+        AudioSegment.from_wav(filename).export(directory + '/' + make_valid(name) + '.mp3', format='mp3')
+        os.remove(filename)
+        filename = directory + '/' + make_valid(name) + '.mp3'
+        filetype = '.mp3'
+    else:
+        print("Invalid file format. Please enter 'flac' or 'mp3'.")
     
+    return filename, filetype
 
-def download_album( args, pass_counter, song_counter, album_counter,lock):
+def download_album( args, pass_counter, song_counter, album_counter,lock,file_format):
     directory = args['directory']
     session = args['session']
     queue = args['queue']
@@ -231,7 +252,7 @@ def download_album( args, pass_counter, song_counter, album_counter,lock):
             songlyricpath = None
 
         # Download song and fill out metadata
-        filename, filetype = download_song(session=session, directory=directory + album_name, name=song_name, url=song_sourceUrl,song_counter=song_counter,lock=lock)
+        filename, filetype = download_song(session=session, directory=directory + album_name, name=song_name, url=song_sourceUrl,song_counter=song_counter,lock=lock,file_format=file_format)
         fill_metadata(filename=filename,
                         filetype=filetype,
                         album=album_name,
@@ -275,6 +296,8 @@ def main():
     song_counter = manager.Value('i', 0)
     album_counter = manager.Value('i', 0)
 
+    file_format = input("Enter the file format to convert to (flac/mp3): ")
+
     try:
         os.mkdir(directory)
     except:
@@ -291,11 +314,11 @@ def main():
 
 
     # Download all albums
-    num_workers = os.cpu_count() - 3  # leave one CPU core free
+    num_workers = os.cpu_count() - 3  # leave CPU core free
     with Pool(num_workers) as pool:
     # with Pool(maxtasksperchild=1) as pool:
         pool.apply_async(update_downloaded_albums, (queue, directory))
-        results = pool.starmap(download_album, [(album, pass_counter, song_counter, album_counter, lock) for album in albums])
+        results = pool.starmap(download_album, [(album, pass_counter, song_counter, album_counter, lock, file_format) for album in albums])
         queue.put('kill')
     
     pass_total = pass_counter.value
