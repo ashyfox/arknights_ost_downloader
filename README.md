@@ -43,7 +43,7 @@ Pillow
 
 ### Runs:
 
-```python3 main.py``` or ```python main.py```
+- ```python3 main.py``` or ```python main.py```
 
-```Enter the format of the song, mp3 or flac ( The songs offers .mp3 and .wav, the program will convert .wav to .flac or .mp3 since .wav can't do metadata. )```
+- ```Enter the format of the song, mp3 or flac ( The songs offers .mp3 and .wav, the program will convert .wav to .flac or .mp3 since .wav can't do metadata. )```
 
