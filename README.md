@@ -2,7 +2,6 @@ Fixed from 1n0r1
 
 Already test for using on Ubuntu & Windows in Python 3.  
 Download all songs, albums and fill out metadata, album, cover art, artists and even lyrics.  
-All songs are be .mp3.   
 
 ### Fix and add function
 
