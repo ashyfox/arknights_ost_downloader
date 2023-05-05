@@ -1,11 +1,13 @@
 Fixed from 1n0r1
 
+Test for use on Ubuntu & Windows in Python 3
+
 ### Fix and add function
 
 - Add the retry for the song didn't download for 100%
 - Add the timeout connection and retry function
 - Add the counter in the multiprocess to count the songs and album
-- Fix the tool use un Windows will be false because the album name have the space in the last
+- Fix the tool use on Windows will be false because the album name have the space in the last
 - Add the delay in every download active
 
 ### Falsed to accomplish
