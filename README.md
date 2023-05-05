@@ -1,6 +1,6 @@
 Fixed from 1n0r1
 
-Test for use on Ubuntu & Windows in Python 3
+Already test for using on Ubuntu & Windows in Python 3
 
 ### Fix and add function
 
