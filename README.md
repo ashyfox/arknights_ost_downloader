@@ -6,6 +6,7 @@ Fixed from 1n0r1
 - Add the timeout connection and retry function
 - Add the counter in the multiprocess to count the songs and album
 - Fix the tool use un Windows will be false because the album name have the space in the last
+- Add the delay in every download active
 
 ### Falsed to accomplish
 
