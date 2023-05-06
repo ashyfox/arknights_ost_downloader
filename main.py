@@ -146,7 +146,7 @@ def download_song(session, directory, name, url, song_counter, lock,file_format)
                 source = session.get(url, stream=True, timeout=timeout)
                 total = int(source.headers.get('content-length', 0))
                 downloaded = f.tell()
-
+        
         if downloaded < total:
             print(f'Download of {name} was incomplete. Retrying...', file=sys.stderr)
             os.remove(filename)
@@ -157,16 +157,17 @@ def download_song(session, directory, name, url, song_counter, lock,file_format)
 
     # If file is .wav then export to .flac
     if source.headers['content-type'] != 'audio/mpeg':
-        filename, filetype = choice_format(file_format,filename,directory,name)
+        all_filldata, filename, filetype = choice_format(file_format,filename,directory,name)
 
         
-    return filename, filetype
+    return  all_filldata, filename, filetype
 
 
 # define a function to make a valid file name
 def choice_format(file_format,filename,directory,name):
     # implementation details here
-
+    all_filldata = []
+    filetype = ''
     # check the input and perform the conversion
     if file_format == 'flac':
         # convert to FLAC
@@ -180,10 +181,24 @@ def choice_format(file_format,filename,directory,name):
         os.remove(filename)
         filename = directory + '/' + make_valid(name) + '.mp3'
         filetype = '.mp3'
+    elif file_format == 'all':
+        temp_filename = filename
+        # Convert to FLAC
+        flac_filename = os.path.join(directory, make_valid(name) + '.flac')
+        AudioSegment.from_wav(filename).export(flac_filename, format='flac')
+        flac_filetype = '.flac'
+        # Convert to MP3
+        mp3_folder = os.path.join(directory, 'mp3')
+        if not os.path.exists(mp3_folder):
+            os.makedirs(mp3_folder)
+        mp3_filename = os.path.join(mp3_folder, make_valid(name) + '.mp3')
+        AudioSegment.from_wav(temp_filename).export(mp3_filename, format='mp3')
+        os.remove(filename)
+        mp3_filetype = '.mp3'
+        all_filldata = [[flac_filename, mp3_filename], [flac_filetype, mp3_filetype]]
     else:
         print("Invalid file format. Please enter 'flac' or 'mp3'.")
-    
-    return filename, filetype
+    return all_filldata, filename, filetype
 
 def download_album( args, pass_counter, song_counter, album_counter,lock,file_format):
     directory = args['directory']
@@ -252,18 +267,31 @@ def download_album( args, pass_counter, song_counter, album_counter,lock,file_fo
             songlyricpath = None
 
         # Download song and fill out metadata
-        filename, filetype = download_song(session=session, directory=directory + album_name, name=song_name, url=song_sourceUrl,song_counter=song_counter,lock=lock,file_format=file_format)
-        fill_metadata(filename=filename,
-                        filetype=filetype,
-                        album=album_name,
-                        title=song_name,
-                        albumartist=album_artistes,
-                        artist=song_artists,
-                        tracknumber=song_track_number,
-                        albumcover=directory + album_name + '/cover.png',
-                        songlyricpath=songlyricpath)
-
-    # Increase album counter
+        all_filldata, filename, filetype = download_song(session=session, directory=directory + album_name, name=song_name, url=song_sourceUrl,song_counter=song_counter,lock=lock,file_format=file_format)
+        if file_format == 'mp3' or file_format == 'flac':
+            fill_metadata(filename=filename,
+                            filetype=filetype,
+                            album=album_name,
+                            title=song_name,
+                            albumartist=album_artistes,
+                            artist=song_artists,
+                            tracknumber=song_track_number,
+                            albumcover=directory + album_name + '/cover.png',
+                            songlyricpath=songlyricpath)
+        elif file_format == 'all':
+            for i in range(0, len(all_filldata[0])):
+                    fill_metadata(filename=all_filldata[0][i],
+                                filetype=all_filldata[1][i],
+                                album=album_name,
+                                title=song_name,
+                                albumartist=album_artistes,
+                                artist=song_artists,
+                                tracknumber=song_track_number,
+                                albumcover=directory + album_name + '/cover.png',
+                                songlyricpath=songlyricpath)
+        else:
+            print("fillmeta error")
+        # Increase album counter
     with lock:
         album_counter.value += 1
     # Mark album as finished
@@ -296,7 +324,7 @@ def main():
     song_counter = manager.Value('i', 0)
     album_counter = manager.Value('i', 0)
 
-    file_format = input("Enter the file format to convert to (flac/mp3): ")
+    file_format = input("Enter the file format to convert to (flac/mp3/all): ")
 
     try:
         os.mkdir(directory)
