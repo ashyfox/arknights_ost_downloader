@@ -11,7 +11,7 @@ Download all songs, albums and fill out metadata, album, cover art, artists and 
 - Fix the tool use on Windows will be false because the album name have the space in the last
 - Add the delay in every download active
 - Add the User Agent to avoid the Program identify is a crawler
-- Add the choice to choose which the format of song
+- Add the choice to choose which the format of song or download all for flac and mp3
 
 ### Falsed to accomplish
 
@@ -44,5 +44,7 @@ Pillow
 
 - ```python3 main.py``` or ```python main.py```
 
-- ```Enter the format of the song, mp3 or flac ( The songs offers .mp3 and .wav, the program will convert .wav to .flac or .mp3 since .wav can't do metadata. )```
+- ```Enter the format of the song, mp3 ,flac or all ( The songs offers .mp3 and .wav, the program will convert .wav to .flac or .mp3 since .wav can't do metadata. )```
+
+- ```Choose the all for download the song all for mp3 and flac by transfer from wav.```
 
