@@ -13,7 +13,7 @@ Download all songs, albums and fill out metadata, album, cover art, artists and 
 - Add the User Agent to avoid the Program identify is a crawler
 - Add the choice to choose which the format of song or download all for flac and mp3
 
-### Falsed to accomplish
+### Error for not complete
 
 - [ ] retry to print the retry message.  
 (Think may the message should add in the tqdm)   
