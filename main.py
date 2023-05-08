@@ -117,6 +117,7 @@ def download_song(session, directory, name, url, song_counter, lock,file_format)
     downloaded = 0
     retry_count = 0
     while downloaded < total:
+        time.sleep(3)
         try:
             with open(filename, 'ab') as f, tqdm(
                 desc=name,
