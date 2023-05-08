@@ -134,21 +134,22 @@ def download_song(session, directory, name, url, song_counter, lock,file_format)
                     if downloaded >= total:
                         break
                     if retry_count > 0:
-                        print(f'Retry successful. Downloading {name}...')
+                        tqdm.write(f'Retry successful. Downloading [{name}]...')
                     retry_count = 0
+            tqdm.write(f'{name} : Download complete.')
         except (requests.exceptions.RequestException, IOError) as e:
             if retry_count >= retries:
                 raise e
             else:
                 retry_count += 1
-                print(f"Download of {name} failed. Retrying in 3 seconds ({retry_count}/{retries})", file=sys.stderr)
+                tqdm.write(f"Download of [{name}] failed. Retrying in 3 seconds ({retry_count}/{retries})", file=sys.stderr)
                 time.sleep(3)
                 source = session.get(url, stream=True, timeout=timeout)
                 total = int(source.headers.get('content-length', 0))
                 downloaded = f.tell()
         
         if downloaded < total:
-            print(f'Download of {name} was incomplete. Retrying...', file=sys.stderr)
+            tqdm.write(f'Download of [{name}] was incomplete. Retrying...', file=sys.stderr)
             os.remove(filename)
         
         # Increase song counter
