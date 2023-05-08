@@ -306,7 +306,7 @@ def read_agent():
 
     # Choose a random user agent
     user_agent = random.choice(user_agent_list)
-
+    print("User Agent: " + user_agent)
     # Set headers with Accept and User-Agent
     headers = {
         'Accept': 'application/json',
@@ -324,7 +324,7 @@ def main():
     pass_counter = manager.Value('i', 0)
     song_counter = manager.Value('i', 0)
     album_counter = manager.Value('i', 0)
-
+    headers = read_agent()
     file_format = input("Enter the file format to convert to (flac/mp3/all): ")
 
     try:
@@ -333,7 +333,7 @@ def main():
         pass
 
 
-    headers = read_agent()
+
     # Get all albums
     albums = session.get('https://monster-siren.hypergryph.com/api/albums', headers=headers).json()['data']
     for album in albums:
