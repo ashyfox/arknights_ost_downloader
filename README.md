@@ -15,7 +15,7 @@ Download all songs, albums and fill out metadata, album, cover art, artists and 
 
 ### Error for not complete
 
-- [ ] retry to print the retry message.  
+- [x] retry to print the retry message.  
 (Think may the message should add in the tqdm)   
 
 ### Note:
