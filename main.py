@@ -157,12 +157,7 @@ def download_song(session, directory, name, url, song_counter, lock,file_format)
         with lock:
             song_counter.value += 1
 
-    # If file is .wav then export to .flac
-    if source.headers['content-type'] != 'audio/mpeg':
-        all_filldata, filename, filetype = choice_format(file_format,filename,directory,name)
-
-        
-    return  all_filldata, filename, filetype
+    return choice_format(file_format,filename,directory,name)
 
 
 # define a function to make a valid file name
@@ -173,13 +168,17 @@ def choice_format(file_format,filename,directory,name):
     # check the input and perform the conversion
     if file_format == 'flac':
         # convert to FLAC
-        AudioSegment.from_wav(filename).export(directory + '/' + make_valid(name) + '.flac', format='flac')
+        if filename.endswith('wav'):
+            AudioSegment.from_wav(filename).export(directory + '/' + make_valid(name) + '.flac', format='flac')
+        else:
+            AudioSegment.from_mp3(filename).export(directory + '/' + make_valid(name) + '.flac', format='flac')
         os.remove(filename)
         filename = directory + '/' + make_valid(name) + '.flac'
         filetype = '.flac'
     elif file_format == 'mp3':
         # convert to MP3
-        AudioSegment.from_wav(filename).export(directory + '/' + make_valid(name) + '.mp3', format='mp3')
+        if filename.endswith('wav'):
+            AudioSegment.from_wav(filename).export(directory + '/' + make_valid(name) + '.mp3', format='mp3')
         os.remove(filename)
         filename = directory + '/' + make_valid(name) + '.mp3'
         filetype = '.mp3'
@@ -187,14 +186,18 @@ def choice_format(file_format,filename,directory,name):
         temp_filename = filename
         # Convert to FLAC
         flac_filename = os.path.join(directory, make_valid(name) + '.flac')
-        AudioSegment.from_wav(filename).export(flac_filename, format='flac')
+        if filename.endswith('wav'):
+            AudioSegment.from_wav(filename).export(flac_filename, format='flac')
+        else:
+            AudioSegment.from_mp3(filename).export(flac_filename, format='flac')
         flac_filetype = '.flac'
         # Convert to MP3
         mp3_folder = os.path.join(directory, 'mp3')
         if not os.path.exists(mp3_folder):
             os.makedirs(mp3_folder)
         mp3_filename = os.path.join(mp3_folder, make_valid(name) + '.mp3')
-        AudioSegment.from_wav(temp_filename).export(mp3_filename, format='mp3')
+        if filename.endswith('wav'):
+            AudioSegment.from_wav(temp_filename).export(mp3_filename, format='mp3')
         os.remove(filename)
         mp3_filetype = '.mp3'
         all_filldata = [[flac_filename, mp3_filename], [flac_filetype, mp3_filetype]]
